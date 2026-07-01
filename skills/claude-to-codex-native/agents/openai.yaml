@@ -1,0 +1,4 @@
+interface:
+  display_name: "Claude to Codex Native"
+  short_description: "Migrate Claude Code power-user setups to Codex-native projects."
+  default_prompt: "Migrate this Claude Code setup to Codex-native form"
