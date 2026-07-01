@@ -159,32 +159,32 @@ def migrate_project_skills(project: Path, apply: bool, actions: list[str]) -> No
                     md.write_text(text, encoding="utf-8")
 
 
-def install_token_hooks(project: Path, source: Path, apply: bool, actions: list[str]) -> None:
+def rewrite_hook_commands(value, hook_dir: Path):
+    if isinstance(value, dict):
+        return {k: rewrite_hook_commands(v, hook_dir) for k, v in value.items()}
+    if isinstance(value, list):
+        return [rewrite_hook_commands(v, hook_dir) for v in value]
+    if isinstance(value, str):
+        return value.replace("./hooks/", f"{hook_dir}/")
+    return value
+
+
+def install_hook_bundle(project: Path, source: Path, bundle_name: str, apply: bool, actions: list[str]) -> None:
     hooks_src = source / "hooks"
     scripts_src = source / "scripts"
+    hooks_json = hooks_src / "hooks.json"
     if not hooks_src.is_dir():
-        log(actions, f"skip_token_hooks missing {hooks_src}")
+        log(actions, f"skip_hook_bundle missing {hooks_src}")
         return
-    root = project / ".codex/token-saving-hooks"
+    if not hooks_json.exists():
+        log(actions, f"skip_hook_bundle missing Codex hooks definition {hooks_json}")
+        return
+    root = project / ".codex/hook-bundles" / bundle_name
     copy_tree(hooks_src, root / "hooks", apply, actions)
     copy_tree(scripts_src, root / "scripts", apply, actions)
     hooks_dir = root / "hooks"
-    config = {
-        "hooks": {
-            "UserPromptSubmit": [{"hooks": [{"type": "command", "command": f"python3 {hooks_dir / 'user-prompt-submit.py'}", "timeout": 5}]}],
-            "PreToolUse": [
-                {"matcher": "Read", "hooks": [{"type": "command", "command": f"bash {hooks_dir / 'pre-tool-dedup.sh'}"}]},
-                {"matcher": "Bash", "hooks": [
-                    {"type": "command", "command": f"bash {hooks_dir / 'pre-bash-diff-guard.sh'}"},
-                    {"type": "command", "command": f"bash {hooks_dir / 'pre-bash-dedup.sh'}"},
-                ]},
-            ],
-            "PostToolUse": [{"matcher": "Read", "hooks": [{"type": "command", "command": f"bash {hooks_dir / 'post-tool-dedup.sh'}"}]}],
-            "PreCompact": [{"hooks": [{"type": "command", "command": f"bash {hooks_dir / 'precompact-snapshot.sh'}", "timeout": 15}]}],
-            "SessionStart": [{"hooks": [{"type": "command", "command": f"bash {hooks_dir / 'session-start-restore.sh'}", "timeout": 5}]}],
-            "Stop": [{"hooks": [{"type": "command", "command": f"bash {hooks_dir / 'stop-quality-gate.sh'}"}]}],
-        }
-    }
+    config = json.loads(hooks_json.read_text(encoding="utf-8"))
+    config = rewrite_hook_commands(config, hooks_dir)
     log(actions, f"write {project / '.codex/hooks.json'}")
     if apply:
         (project / ".codex").mkdir(parents=True, exist_ok=True)
@@ -223,7 +223,8 @@ def main() -> int:
     parser.add_argument("--home", default=str(Path.home()))
     parser.add_argument("--works-root", default=str(Path.home() / "works"))
     parser.add_argument("--extra-project", action="append", default=[])
-    parser.add_argument("--token-hooks-source")
+    parser.add_argument("--hook-bundle-source")
+    parser.add_argument("--hook-bundle-name")
     parser.add_argument("--apply", action="store_true")
     parser.add_argument("--purge-claude", action="store_true")
     parser.add_argument("--clean-shell", action="store_true", default=True)
@@ -239,8 +240,10 @@ def main() -> int:
     projects += [Path(p).expanduser() for p in args.extra_project]
     for project in sorted(set(projects)):
         migrate_project_skills(project, args.apply, actions)
-        if args.token_hooks_source:
-            install_token_hooks(project, Path(args.token_hooks_source).expanduser(), args.apply, actions)
+        if args.hook_bundle_source:
+            bundle_source = Path(args.hook_bundle_source).expanduser()
+            bundle_name = args.hook_bundle_name or bundle_source.name
+            install_hook_bundle(project, bundle_source, bundle_name, args.apply, actions)
 
     if args.clean_shell:
         clean_shell(home, args.apply, actions)

@@ -8,7 +8,7 @@ It is designed for users who want to fully leave Claude Code behind rather than 
 
 - Claude project memories into `.codex/memories/`
 - Claude or `.agents` skills into project-level `.codex/skills/`
-- Token-saving hooks into `.codex/token-saving-hooks/` plus `.codex/hooks.json`
+- Hook-style plugins into Codex-native hook bundles under `.codex/hook-bundles/` plus `.codex/hooks.json` when a Codex-ready hook definition exists
 - Shell startup files by removing Claude/Anthropic environment leftovers
 - Global and project Claude config after explicit approval
 
@@ -59,4 +59,3 @@ python3 skills/claude-to-codex-native/scripts/migrate_claude_to_codex.py --apply
 ## Safety
 
 Run the dry-run first and inspect the planned actions. The script does not delete Claude files unless `--purge-claude` is passed together with `--apply`.
-

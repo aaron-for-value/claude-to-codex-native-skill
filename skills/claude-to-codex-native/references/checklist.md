@@ -48,7 +48,7 @@ Patch visible docs:
 - `.claude/skills` -> `.codex/skills`
 - "Claude Code" -> "Codex" only when it describes the current runtime, not historical notes.
 
-## Hook Mapping
+## Hook And Plugin Mapping
 
 Claude concepts to avoid:
 
@@ -56,14 +56,21 @@ Claude concepts to avoid:
 - `statusLine`
 - `CLAUDE_PLUGIN_ROOT`
 - `CLAUDE_PLUGIN_DATA`
-- Telegram bot as primary remote access
+- Assuming a bot or bridge is the primary remote-control surface
 
 Codex-native target:
 
 - `.codex/hooks.json`
-- `.codex/token-saving-hooks/`
+- `.codex/hook-bundles/<name>/`
 - `~/.codex/config.toml` only for global Codex config
-- Codex remote/mobile/app features rather than Telegram unless explicitly requested
+- Codex remote/mobile/app features rather than legacy bot bridges unless explicitly requested
+
+For each hook-style plugin:
+
+- Identify the original lifecycle events and match them to Codex hook events.
+- Replace Claude-specific environment variables and plugin-root placeholders with Codex-safe paths.
+- Keep hook state under `.codex/` or `/tmp/.codex_*`, not `.claude/`.
+- Generate or install Codex-ready `hooks.json` only after command paths are valid for the target project.
 
 ## Purge
 
