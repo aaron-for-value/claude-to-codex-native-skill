@@ -17,6 +17,8 @@ Prefer Codex-native project files:
 - Hook bundles: `<project>/.codex/hook-bundles/<name>/`
 - Global personal plugin source only when explicitly useful, and only after a publishing-safety scan
 
+Preserve the original scope. If the Claude setup defined MCP servers, skills, agents, hooks, or plugins at project level, migrate them to project-level Codex files instead of promoting them to global Codex config.
+
 Do not convert Claude project memory into `AGENTS.md`. Keep `AGENTS.md` for rules; keep recallable history under `.codex/memories/`.
 
 ## Workflow
@@ -25,6 +27,8 @@ Do not convert Claude project memory into `AGENTS.md`. Keep `AGENTS.md` for rule
    - Search shell startup files for `claude`, `CLAUDE`, `anthropic`, `ANTHROPIC`.
    - List global Claude config: `~/.claude`, `~/.claude.json`, `~/claude-backup`, `~/.cache/claude`.
    - List project `.claude` directories.
+   - Read project instruction files such as `CLAUDE.md` before deciding scope; they may state that MCP, skills, agents, hooks, or plugins are intentionally project-level.
+   - List project MCP config such as `.mcp.json` and migrate it to `<project>/.codex/config.toml` instead of global config when project-owned.
    - List Codex plugins and marketplaces; remove Claude-origin plugins when the user wants Codex-native only.
    - Identify Claude-era remote-control integrations, such as bots, bridge daemons, or URL handlers, and map them to Codex-native remote/app workflows where possible.
 2. Migrate useful data.
@@ -94,6 +98,7 @@ python3 <skill>/scripts/migrate_claude_to_codex.py \
 - Ask for approval before destructive commands or writes outside the workspace.
 - Treat `learn/study`, `redNoteForAi`, and similar nonstandard paths as user-confirmed deletions only.
 - If a project has both `.claude/skills` and `.codex/skills`, copy into `.codex/skills` and preserve the existing Codex version unless overwriting is necessary.
+- Do not globalize project-owned MCP, skills, agents, hooks, or plugins. Project-owned Claude config should become project-owned Codex config.
 - Prefer Codex-native remote/app workflows over Claude-era bot or bridge integrations. Keep third-party bot bridges only when the user explicitly asks for them.
 
 ## Verification
